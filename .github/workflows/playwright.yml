@@ -6,14 +6,37 @@ on:
   pull_request:
     branches: [main, dev]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
-  checks: write
   contents: read
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  quality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+
+  e2e:
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
+
+    permissions:
+      checks: write
+      contents: read
 
     env:
       CI: true
@@ -22,21 +45,19 @@ jobs:
       TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
 
       - run: npm ci
-      - run: npm run typecheck
-      - run: npm run lint
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test
+      - run: npm test
 
       - name: Publish test results
-        uses: dorny/test-reporter@v2
+        uses: dorny/test-reporter@v3
         if: always()
         with:
           name: Playwright tests
@@ -44,7 +65,7 @@ jobs:
           reporter: java-junit
           fail-on-empty: false
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report
