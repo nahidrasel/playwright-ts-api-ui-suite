@@ -17,6 +17,7 @@ export default defineConfig({
     testIdAttribute: 'data-test', // the demo app uses data-test, many apps use data-testid
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    trace: 'retain-on-failure',
   },
   projects: [
     // logs in once and saves the session for the UI project

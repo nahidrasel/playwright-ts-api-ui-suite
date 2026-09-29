@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, dev]
 
+permissions:
+  checks: write
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -29,7 +33,16 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test --reporter=line
+      - run: npx playwright test
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v2
+        if: always()
+        with:
+          name: Playwright tests
+          path: test-results/junit.xml
+          reporter: java-junit
+          fail-on-empty: false
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -38,4 +51,5 @@ jobs:
           path: |
             playwright-report/
             test-results/
+          if-no-files-found: warn
           retention-days: 14
