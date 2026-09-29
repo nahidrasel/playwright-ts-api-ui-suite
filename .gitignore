@@ -1,0 +1,15 @@
+node_modules/
+test-results/
+playwright-report/
+blob-report/
+playwright/.auth/
+.env
+.env.*
+*.log
+.DS_Store
+appsettings.local.json
+appsettings.*.local.json
+!appsettings.json
+!appsettings.qa.json
+!appsettings.dev.json
+!appsettings.prod.json
