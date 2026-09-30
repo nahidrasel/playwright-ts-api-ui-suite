@@ -1,4 +1,4 @@
-import { test as base, expect, type Page } from '@playwright/test';
+import { test as base, expect } from '@playwright/test';
 import { LoginPage } from '@pages/login.page';
 import { InventoryPage } from '@pages/inventory.page';
 import { CartPage } from '@pages/cart.page';
