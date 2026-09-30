@@ -14,9 +14,7 @@ function parseAppSettingsFile(filePath: string): Record<string, string> {
 
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
-    return Object.fromEntries(
-      Object.entries(parsed).map(([key, value]) => [key, String(value)]),
-    );
+    return Object.fromEntries(Object.entries(parsed).map(([key, value]) => [key, String(value)]));
   } catch {
     return raw
       .split(/\r?\n/)
@@ -87,9 +85,40 @@ export function required(name: string, aliases: string[] = []): string {
   return value;
 }
 
+export function parseApiHeaders(value: string | undefined): Record<string, string> {
+  if (!value) return {};
+
+  let headers: unknown;
+  try {
+    headers = JSON.parse(value);
+  } catch {
+    throw new Error('API_HEADERS must be a JSON object containing string values');
+  }
+
+  if (
+    typeof headers !== 'object' ||
+    headers === null ||
+    Array.isArray(headers) ||
+    Object.entries(headers).some(([name, headerValue]) => !name || typeof headerValue !== 'string')
+  ) {
+    throw new Error('API_HEADERS must be a JSON object containing string values');
+  }
+
+  return headers as Record<string, string>;
+}
+
+export function buildApiHeaders(
+  headers: Record<string, string>,
+  token?: string,
+): Record<string, string> {
+  return token ? { ...headers, Authorization: `Bearer ${token}` } : { ...headers };
+}
+
 export const env = {
   baseUrl: required('BASE_URL', ['APP_BASE_URL', 'URL']),
   apiUrl: required('API_URL', ['API_BASE_URL']),
+  apiToken: resolveEnv('API_TOKEN'),
+  apiHeaders: parseApiHeaders(resolveEnv('API_HEADERS')),
   username: required('TEST_USER', ['USERNAME', 'GITHUB_USERNAME', 'GITHUB_TEST_USER']),
   password: required('TEST_PASSWORD', ['PASSWORD', 'GITHUB_PASSWORD', 'GITHUB_TEST_PASSWORD']),
   isCI: !!process.env.CI,

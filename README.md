@@ -13,7 +13,7 @@ npm test
 npm run report
 ```
 
-This project uses appsettings-based configuration for the base URL and environment values, while username/password are loaded from GitHub secrets or local environment variables.
+This project uses appsettings-based configuration for base URLs and environment values. Credentials and API authorization are optional environment variables or GitHub secrets; they are not stored in tracked appsettings files.
 
 ## Commands
 
@@ -53,6 +53,8 @@ playwright.config.ts   projects, reporters, retries, trace and screenshots
 `openapi/posts.yaml` is the source of truth for the Posts API request and response types. Run `npm run api:types` after changing the contract; the generated definitions are written to `src/api/posts.generated.d.ts`.
 
 API client methods return `IApiResponse<T>`, which contains the HTTP status, headers, and a typed body. These generated TypeScript types are compile-time only: they do not validate the shape of JSON at runtime. API tests validate status codes and important response values separately. JSONPlaceholder simulates writes rather than persisting them, so the update test uses a seeded post ID.
+
+For authenticated APIs, set `API_TOKEN` to send `Authorization: Bearer <token>`. Set `API_HEADERS` to a JSON object of additional string headers, for example `{"X-Tenant":"qa"}`. In CI, provide these as the `API_TOKEN` and `API_HEADERS` repository secrets. Both are optional for the public JSONPlaceholder sample.
 
 ## Conventions
 
