@@ -1,9 +1,9 @@
-import { test as base, expect } from '@playwright/test';
+import { test as base, expect, type Page } from '@playwright/test';
 import { LoginPage } from '@pages/login.page';
 import { InventoryPage } from '@pages/inventory.page';
 import { CartPage } from '@pages/cart.page';
 import { PostClient } from '@api/post.client';
-import { env } from '@utils/config-loader';
+import { buildApiHeaders, env } from '@utils/config-loader';
 
 type Fixtures = {
   loginPage: LoginPage;
@@ -25,7 +25,10 @@ export const test = base.extend<Fixtures>({
 
   // Own API context so it works from any project; shows setup + teardown around use().
   postClient: async ({ playwright }, use) => {
-    const request = await playwright.request.newContext({ baseURL: env.apiUrl });
+    const request = await playwright.request.newContext({
+      baseURL: env.apiUrl,
+      extraHTTPHeaders: buildApiHeaders(env.apiHeaders, env.apiToken),
+    });
     await use(new PostClient(request));
     await request.dispose(); // teardown
   },

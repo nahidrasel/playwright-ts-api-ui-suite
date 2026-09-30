@@ -45,6 +45,8 @@ jobs:
       APPSETTINGS_ENV: qa
       TEST_USER: ${{ secrets.TEST_USER }}
       TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+      API_TOKEN: ${{ secrets.API_TOKEN }}
+      API_HEADERS: ${{ secrets.API_HEADERS }}
 
     steps:
       - uses: actions/checkout@v7

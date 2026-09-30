@@ -1,0 +1,29 @@
+{
+  "validUsers": [
+    {
+      "name": "standard user",
+      "username": "standard_user",
+      "password": "secret_sauce"
+    }
+  ],
+  "invalidLogins": [
+    {
+      "name": "wrong password",
+      "username": "standard_user",
+      "password": "not-the-password",
+      "error": "do not match"
+    },
+    {
+      "name": "unknown user",
+      "username": "nobody",
+      "password": "secret_sauce",
+      "error": "do not match"
+    },
+    {
+      "name": "locked out user",
+      "username": "locked_out_user",
+      "password": "secret_sauce",
+      "error": "locked out"
+    }
+  ]
+}
