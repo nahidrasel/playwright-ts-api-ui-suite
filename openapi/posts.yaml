@@ -1,0 +1,121 @@
+openapi: 3.1.0
+info:
+  title: Posts API
+  version: 1.0.0
+  description: JSONPlaceholder posts used by the automation framework.
+servers:
+  - url: https://jsonplaceholder.typicode.com
+paths:
+  /posts:
+    get:
+      operationId: listPosts
+      responses:
+        '200':
+          description: Posts returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Post'
+    post:
+      operationId: createPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewPost'
+      responses:
+        '201':
+          description: Post created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+  /posts/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    get:
+      operationId: getPost
+      responses:
+        '200':
+          description: Post returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '404':
+          description: Post not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundBody'
+    put:
+      operationId: updatePost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewPost'
+      responses:
+        '200':
+          description: Post updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+    delete:
+      operationId: deletePost
+      responses:
+        '200':
+          description: Post deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+components:
+  schemas:
+    NewPost:
+      type: object
+      required: [userId, title, body]
+      properties:
+        userId:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+          minLength: 1
+        body:
+          type: string
+          minLength: 1
+      additionalProperties: false
+    Post:
+      type: object
+      required: [id, userId, title, body]
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        userId:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+          minLength: 1
+        body:
+          type: string
+          minLength: 1
+      additionalProperties: false
+    NotFoundBody:
+      type: object
+      additionalProperties: false
+    DeleteResponse:
+      type: object
+      additionalProperties: false

@@ -11,6 +11,7 @@
     "test:headed": "playwright test --project=chromium-ui --headed",
     "test:debug": "playwright test --debug",
     "report": "playwright show-report",
+    "api:types": "openapi-typescript ./openapi/posts.yaml -o ./src/api/posts.generated.d.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write ."
@@ -22,6 +23,7 @@
     "dotenv": "^16.4.0",
     "eslint": "^9.0.0",
     "eslint-plugin-playwright": "^2.0.0",
+    "openapi-typescript": "^7.13.0",
     "prettier": "^3.3.0",
     "typescript": "^5.6.0",
     "typescript-eslint": "^8.0.0"

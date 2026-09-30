@@ -32,6 +32,20 @@ function parseAppSettingsFile(filePath: string): Record<string, string> {
   }
 }
 
+export function mergeAppSettings(
+  fileSettings: Record<string, string>[],
+  environment: NodeJS.ProcessEnv = process.env,
+): Record<string, string> {
+  const merged = Object.assign({}, ...fileSettings);
+
+  for (const key of Object.keys(merged)) {
+    const value = environment[key];
+    if (value !== undefined) merged[key] = value;
+  }
+
+  return merged;
+}
+
 function loadAppSettings(): void {
   const rootDir = path.resolve(__dirname, '..', '..');
   const explicitFile = process.env.APPSETTINGS_FILE;
@@ -42,12 +56,10 @@ function loadAppSettings(): void {
     path.resolve(rootDir, `appsettings.${environmentName}.json`),
   ];
 
-  for (const file of filesToLoad) {
-    const parsed = parseAppSettingsFile(file);
-    for (const [key, value] of Object.entries(parsed)) {
-      if (process.env[key] === undefined) {
-        process.env[key] = value;
-      }
+  const settings = mergeAppSettings(filesToLoad.map(parseAppSettingsFile));
+  for (const [key, value] of Object.entries(settings)) {
+    if (process.env[key] === undefined) {
+      process.env[key] = value;
     }
   }
 }
