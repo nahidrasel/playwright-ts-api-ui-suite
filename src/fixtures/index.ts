@@ -20,7 +20,7 @@ export const test = base.extend<Fixtures>({
     await use(new InventoryPage(page));
   },
   cartPage: async ({ page }, use) => {
-    await use(new CartPage(page));
+    await use(new CartPage(page, page.getByTestId('inventory-item')));
   },
 
   // Own API context so it works from any project; shows setup + teardown around use().

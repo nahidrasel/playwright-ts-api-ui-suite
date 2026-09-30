@@ -22,6 +22,7 @@ export default defineConfig({
   projects: [
     // logs in once and saves the session for the UI project
     { name: 'setup', testDir: './tests', testMatch: /auth\.setup\.ts/ },
+    { name: 'unit', testDir: './tests/unit' },
     {
       name: 'chromium-ui',
       testDir: './tests/ui',

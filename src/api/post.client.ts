@@ -1,34 +1,40 @@
-import { APIResponse } from '@playwright/test';
+import { IApiResponse, parseResponse } from './api-response';
 import { BaseClient } from './base.client';
+import type { components } from './posts.generated';
 
-export interface Post {
-  id: number;
-  userId: number;
-  title: string;
-  body: string;
-}
+export type NewPost = components['schemas']['NewPost'];
+export type Post = components['schemas']['Post'];
+export type NotFoundBody = components['schemas']['NotFoundBody'];
+export type DeleteResponse = components['schemas']['DeleteResponse'];
 
-export type NewPost = Omit<Post, 'id'>;
-
-/** Thin wrapper: returns raw responses so each test asserts status and body explicitly. */
 export class PostClient extends BaseClient {
-  list(): Promise<APIResponse> {
-    return this.request.get('/posts');
+  async list(): Promise<IApiResponse<Post[]>> {
+    const response = await this.request.get('/posts');
+    return parseResponse<Post[]>(response);
   }
 
-  get(id: number): Promise<APIResponse> {
-    return this.request.get(`/posts/${id}`);
+  async get(id: number): Promise<IApiResponse<Post>> {
+    const response = await this.request.get(`/posts/${id}`);
+    return parseResponse<Post>(response);
   }
 
-  create(data: NewPost): Promise<APIResponse> {
-    return this.request.post('/posts', { data });
+  async getExpectingNotFound(id: number): Promise<IApiResponse<NotFoundBody>> {
+    const response = await this.request.get(`/posts/${id}`);
+    return parseResponse<NotFoundBody>(response);
   }
 
-  update(id: number, data: NewPost): Promise<APIResponse> {
-    return this.request.put(`/posts/${id}`, { data });
+  async create(data: NewPost): Promise<IApiResponse<Post>> {
+    const response = await this.request.post('/posts', { data });
+    return parseResponse<Post>(response);
   }
 
-  remove(id: number): Promise<APIResponse> {
-    return this.request.delete(`/posts/${id}`);
+  async update(id: number, data: NewPost): Promise<IApiResponse<Post>> {
+    const response = await this.request.put(`/posts/${id}`, { data });
+    return parseResponse<Post>(response);
+  }
+
+  async remove(id: number): Promise<IApiResponse<DeleteResponse>> {
+    const response = await this.request.delete(`/posts/${id}`);
+    return parseResponse<DeleteResponse>(response);
   }
 }

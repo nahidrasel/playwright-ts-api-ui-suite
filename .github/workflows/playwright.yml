@@ -27,6 +27,8 @@ jobs:
           cache: npm
 
       - run: npm ci
+      - run: npm run api:types
+      - run: git diff --exit-code -- src/api/posts.generated.d.ts
       - run: npm run lint
       - run: npm run typecheck
 

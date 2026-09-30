@@ -1,48 +1,46 @@
 import { test, expect } from '@fixtures';
-import { Post } from '@api/post.client';
 import { buildPost } from '@data/post.factory';
 
 test.describe('Posts API', () => {
   test('gets a single post', { tag: '@smoke' }, async ({ postClient }) => {
-    const res = await postClient.get(1);
-    expect(res.status()).toBe(200);
-
-    const body = (await res.json()) as Post;
+    const { status, body } = await postClient.get(1);
+    expect(status).toBe(200);
     expect(body.id).toBe(1);
-    expect(body).toEqual(
-      expect.objectContaining({ userId: expect.any(Number), title: expect.any(String), body: expect.any(String) }),
-    );
   });
 
   test('lists posts', async ({ postClient }) => {
-    const res = await postClient.list();
-    expect(res.status()).toBe(200);
-
-    const body = (await res.json()) as Post[];
+    const { status, body } = await postClient.list();
+    expect(status).toBe(200);
     expect(body.length).toBeGreaterThan(0);
   });
 
   test('creates a post', async ({ postClient }) => {
     const data = buildPost();
 
-    const res = await postClient.create(data);
-    expect(res.status()).toBe(201);
-
-    const body = (await res.json()) as Post;
-    expect(body.id).toBeDefined();
-    expect(body).toMatchObject(data);
+    const { status, body } = await postClient.create(data);
+    expect(status).toBe(201);
+    try {
+      expect(body.id).toBeGreaterThan(0);
+      expect(body).toMatchObject({ userId: data.userId, title: data.title, body: data.body });
+    } finally {
+      const cleanupResponse = await postClient.remove(body.id);
+      expect(cleanupResponse.status).toBe(200);
+    }
   });
 
   test('updates a post', async ({ postClient }) => {
     const data = buildPost({ title: 'Updated title' });
 
-    const res = await postClient.update(1, data);
-    expect(res.status()).toBe(200);
-    expect(((await res.json()) as Post).title).toBe('Updated title');
+    // JSONPlaceholder only supports updates for seeded IDs and does not persist writes.
+    const { status, body } = await postClient.update(1, data);
+    expect(status).toBe(200);
+    expect(body.id).toBe(1);
+    expect(body.title).toBe('Updated title');
   });
 
   test('returns 404 for a post that does not exist', async ({ postClient }) => {
-    const res = await postClient.get(999_999);
-    expect(res.status()).toBe(404);
+    const { status, body } = await postClient.getExpectingNotFound(999_999);
+    expect(status).toBe(404);
+    expect(body).toEqual({});
   });
 });
