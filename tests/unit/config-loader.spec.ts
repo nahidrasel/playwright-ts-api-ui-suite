@@ -1,5 +1,5 @@
 import { test, expect } from '@fixtures';
-import { buildApiHeaders, mergeAppSettings, parseApiHeaders } from '@utils/config-loader';
+import { buildApiHeaders, mergeAppSettings, parseApiHeaders, resolveSetting } from '@utils/config-loader';
 
 test('environment settings override base appsettings', () => {
   const settings = mergeAppSettings(
@@ -29,6 +29,17 @@ test('environment variables override all appsettings files', () => {
     BASE_URL: 'https://ci.example',
     API_URL: 'https://api-qa.example',
   });
+});
+
+test('environment variable aliases override canonical appsettings values', () => {
+  expect(
+    resolveSetting(
+      'BASE_URL',
+      ['APP_BASE_URL'],
+      { APP_BASE_URL: 'https://env.example' },
+      { BASE_URL: 'https://qa.example' },
+    ),
+  ).toBe('https://env.example');
 });
 
 test('parses configured API headers', () => {

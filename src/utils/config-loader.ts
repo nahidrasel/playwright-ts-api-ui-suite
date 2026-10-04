@@ -62,25 +62,32 @@ function loadAppSettings(): void {
   }
 }
 
+const environmentOverrides = { ...process.env };
 loadAppSettings();
 
-/** Resolve the first defined environment variable from a list of names. */
-function resolveEnv(name: string, aliases: string[] = []): string | undefined {
+/** Resolve explicit environment values before values loaded from appsettings. */
+export function resolveSetting(
+  name: string,
+  aliases: string[] = [],
+  environment: NodeJS.ProcessEnv = process.env,
+  appSettings: NodeJS.ProcessEnv = {},
+): string | undefined {
   const keys = [name, ...aliases];
 
-  for (const key of keys) {
-    const value = process.env[key];
-    if (value !== undefined && value !== '') {
-      return value;
+  for (const source of [environment, appSettings]) {
+    for (const key of keys) {
+      const value = source[key];
+      if (value !== undefined && value !== '') {
+        return value;
+      }
     }
   }
-
   return undefined;
 }
 
 /** Read an env var that must exist for the selected environment. */
 export function required(name: string, aliases: string[] = []): string {
-  const value = resolveEnv(name, aliases);
+  const value = resolveSetting(name, aliases, environmentOverrides, process.env);
   if (!value) throw new Error(`Missing required environment variable: ${name}`);
   return value;
 }
@@ -117,8 +124,8 @@ export function buildApiHeaders(
 export const env = {
   baseUrl: required('BASE_URL', ['APP_BASE_URL', 'URL']),
   apiUrl: required('API_URL', ['API_BASE_URL']),
-  apiToken: resolveEnv('API_TOKEN'),
-  apiHeaders: parseApiHeaders(resolveEnv('API_HEADERS')),
+  apiToken: resolveSetting('API_TOKEN', [], environmentOverrides, process.env),
+  apiHeaders: parseApiHeaders(resolveSetting('API_HEADERS', [], environmentOverrides, process.env)),
   username: required('TEST_USER', ['USERNAME', 'GITHUB_USERNAME', 'GITHUB_TEST_USER']),
   password: required('TEST_PASSWORD', ['PASSWORD', 'GITHUB_PASSWORD', 'GITHUB_TEST_PASSWORD']),
   isCI: !!process.env.CI,
