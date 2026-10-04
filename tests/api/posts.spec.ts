@@ -14,18 +14,14 @@ test.describe('Posts API', () => {
     expect(body.length).toBeGreaterThan(0);
   });
 
-  test('creates a post', async ({ postClient }) => {
-    const data = buildPost();
-
-    const { status, body } = await postClient.create(data);
-    expect(status).toBe(201);
-    try {
-      expect(body.id).toBeGreaterThan(0);
-      expect(body).toMatchObject({ userId: data.userId, title: data.title, body: data.body });
-    } finally {
-      const cleanupResponse = await postClient.remove(body.id);
-      expect(cleanupResponse.status).toBe(200);
-    }
+  test('creates a post', async ({ createdPost }) => {
+    expect(createdPost.status).toBe(201);
+    expect(createdPost.body.id).toBeGreaterThan(0);
+    expect(createdPost.body).toMatchObject({
+      userId: createdPost.data.userId,
+      title: createdPost.data.title,
+      body: createdPost.data.body,
+    });
   });
 
   test('updates a post', async ({ postClient }) => {
