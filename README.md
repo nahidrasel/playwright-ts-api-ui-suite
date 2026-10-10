@@ -1,98 +1,89 @@
-# Playwright + TypeScript framework
+# Playwright + TypeScript UI and API automation
 
-UI and API automation with page and component objects, fixtures, per-test data, saved authentication, CI, linting and AI-assistant guidelines.
+A portfolio framework demonstrating maintainable Playwright test automation: page and component objects, typed API clients, fixtures, test-data factories, OpenAPI-generated types, lint/type checks, and GitHub Actions reporting.
 
-The sample tests run against public demo targets: [Sauce Demo](https://www.saucedemo.com) (UI) and [JSONPlaceholder](https://jsonplaceholder.typicode.com) (API). Replace pages, clients and data with your own application.
+The tests use public demo targets: [Sauce Demo](https://www.saucedemo.com) for UI and [JSONPlaceholder](https://jsonplaceholder.typicode.com) for API. JSONPlaceholder simulates writes rather than persisting them.
 
 ## Quick start
 
+Requirements: Node.js 22 and npm.
+
 ```bash
-npm install
+npm ci
 npx playwright install chromium
 npm test
-npm run report
 ```
 
-This project uses appsettings-based configuration for base URLs and environment values. Credentials and API authorization are optional environment variables or GitHub secrets; they are not stored in tracked appsettings files.
+Useful commands:
 
-## Commands
+| Command | Purpose |
+| --- | --- |
+| `npm test` | Run the configured projects |
+| `npm run test:ui` / `npm run test:api` | Run UI or API tests |
+| `npm run test:smoke` | Run smoke-tagged tests |
+| `npm run typecheck` / `npm run lint` | Static quality checks |
+| `npm run api:types` | Regenerate types from the OpenAPI source |
+| `npm run report` | Open the most recent Playwright HTML report |
 
-| Command                                     | What it does                                 |
-| ------------------------------------------- | -------------------------------------------- |
-| `npm test`                                  | All projects (setup, unit, UI, API)          |
-| `npm run test:ui` / `test:api`              | One project                                  |
-| `npm run test:smoke`                        | Tests tagged @smoke                          |
-| `npm run test:headed` / `test:debug`        | Watch or step through                        |
-| `npx playwright test tests/ui/cart.spec.ts` | One file                                     |
-| `npm run api:types`                         | Generate API types from the OpenAPI document |
-| `npm run typecheck` / `lint` / `format`     | Quality checks                               |
-
-## Structure
+## Architecture
 
 ```text
-src/
-  pages/        page objects (extend BasePage)
-  components/   reusable component objects (table, product card, modal)
-  fixtures/     one merged test object: page objects, API clients, data
-  api/          API clients, response wrapper and generated OpenAPI types
-  test-data/    factories (unique data) and static reference data
-  utils/        env config and helpers
-tests/
-  auth.setup.ts log in once, save storageState
-  ui/           UI specs (start authenticated)
-  api/          API specs (no browser)
-  unit/         focused framework helper tests
-openapi/posts.yaml   API contract; source for generated TypeScript types
-playwright.config.ts   projects, reporters, retries, trace and screenshots
-.github/workflows/     CI pipeline
-.github/copilot-instructions.md   rules for AI assistants
+tests/ ──> fixtures ──> page/component objects ──> Playwright browser
+   │          │
+   │          └──────> API clients ──> Playwright APIRequestContext
+   └────────────────> assertions against requirements
+
+openapi/posts.yaml ──> generated TypeScript API types
+src/test-data/ ───────> data factories and reference data
 ```
 
-## API contracts
+- **Tests** express the requirement and own assertions.
+- **Fixtures** compose page objects, API clients, and test data; fixture teardown disposes resources.
+- **Page/component objects** keep locators and user actions near the UI component they represent.
+- **API clients** centralise requests and response typing. Generated TypeScript types help at compile time; they do not validate JSON at runtime.
+- **Factories** create test-specific data rather than sharing mutable state.
+- **CI** runs dependency installation, generated-type drift checks, linting, type checking, and Playwright tests; reports are uploaded even when tests fail.
 
-`openapi/posts.yaml` is the source of truth for the Posts API request and response types. Run `npm run api:types` after changing the contract; the generated definitions are written to `src/api/posts.generated.d.ts`.
+### Test-design examples
 
-API client methods return `IApiResponse<T>`, which contains the HTTP status, headers, and a typed body. These generated TypeScript types are compile-time only: they do not validate the shape of JSON at runtime. API tests validate status codes and important response values separately. JSONPlaceholder simulates writes rather than persisting them, so the update test uses a seeded post ID.
+- **Positive API:** verify a successful status *and* the response fields that satisfy the requirement.
+- **Negative API:** request a non-existent record and assert both the expected 404 status and response shape.
+- **UI state transition:** add a product, open the cart, and assert the item and cart count—not just that a click completed.
+- **Isolation:** use per-test data and fixture teardown; do not depend on execution order.
+- **Boundary thinking:** add empty, malformed, missing-field, duplicate, and permission-related cases when the target API contract supports them. Do not assume a demo service enforces rules it does not implement.
 
-For authenticated APIs, set `API_TOKEN` to send `Authorization: Bearer <token>`. Set `API_HEADERS` to a JSON object of additional string headers, for example `{"X-Tenant":"qa"}`. In CI, provide these as the `API_TOKEN` and `API_HEADERS` repository secrets. Both are optional for the public JSONPlaceholder sample.
+Current examples are deliberately scoped to the behavior supported by the public demo APIs; see `docs/ai-assisted-qa/` for a worked, human-reviewed scenario-design example.
 
-## Conventions
+## Configuration and secrets
 
-- Tests import `test` and `expect` from `@fixtures`, not from `@playwright/test`.
-- Locators: role, label, placeholder, text, then test id. No hard waits; use web-first assertions.
-- Assertions live in tests; page objects hold locators and actions.
-- Tests create unique data with factories and clean up created records when the API supports it. No shared mutable state, so everything is parallel-safe.
-- Secrets come from environment variables or CI secrets, never from the repo.
-- Retries only in CI, as a safety net; fix flakiness at the root.
-- Tag tests with `{ tag: '@smoke' }` for fast pull-request feedback.
+Base URLs and non-sensitive defaults live in appsettings files. Optional credentials and API authorization are supplied through environment variables or GitHub Actions secrets. Never commit real credentials, tokens, customer data, or production configuration. The Sauce Demo account used by this public sample is a documented demo account, not a private credential.
 
-## How the pieces map to common interview topics
+## AI-assisted QA showcase
 
-| Topic                                | Where to look                                               |
-| ------------------------------------ | ----------------------------------------------------------- |
-| Fixtures with setup and teardown     | `src/fixtures/index.ts` (`postClient` disposes its context) |
-| storageState authentication          | `tests/auth.setup.ts` + `chromium-ui` project               |
-| Page and component objects           | `src/pages`, `src/components`                               |
-| Row/component scoping                | `InventoryPage.item(name)`                                  |
-| API testing                          | `tests/api/posts.spec.ts`, `src/api`                        |
-| Test data factories                  | `src/test-data/post.factory.ts`                             |
-| Data-driven tests                    | `INVALID_LOGINS` loop in `login.spec.ts`                    |
-| CI, reporting, artifacts             | `.github/workflows/playwright.yml`, config reporters        |
-| Lint rules that catch flaky patterns | `eslint.config.mjs`                                         |
-| AI conventions                       | `.github/copilot-instructions.md`                           |
+The `docs/ai-assisted-qa/` example demonstrates a bounded workflow:
 
-## Adapting to your application
+1. Start with a requirement and explicit acceptance criteria.
+2. Ask an AI assistant to propose scenarios, risks, and edge cases using the included prompt.
+3. Map proposals to acceptance criteria and identify gaps or unsupported assumptions.
+4. Have a human reviewer approve or reject each proposal.
+5. Implement and run the accepted tests; report actual results separately from AI suggestions.
 
-1. Set `BASE_URL`, `API_URL` and credentials in `.env` (secrets in CI).
-2. Change `testIdAttribute` in `playwright.config.ts` if your app uses `data-testid`.
-3. Replace `src/pages`, `src/components` and `src/api` with your own.
-4. Update `tests/auth.setup.ts` for your login flow; add a second setup file per role if needed.
-5. Add API-based data fixtures (create through the API, delete after `use()`).
+This is a documented, human-in-the-loop workflow—not an autonomous agent or a claim that AI-generated tests are correct by default. Assistant conventions are in `.github/copilot-instructions.md`.
 
-## CI sharding (when the suite grows)
+## Repository layout
 
-```bash
-npx playwright test --shard=1/4
-```
+- `src/pages`, `src/components`: UI abstractions
+- `src/fixtures`: shared fixtures and teardown
+- `src/api`: API clients and generated types
+- `src/test-data`: data factories
+- `tests/ui`, `tests/api`, `tests/unit`: UI, API, and focused helper tests
+- `openapi/posts.yaml`: API type-generation source
+- `.github/workflows/playwright.yml`: CI pipeline
 
-Run one shard per job in a matrix, and merge reports with the `blob` reporter.
+## Adapting the framework
+
+1. Configure `BASE_URL` and `API_URL` for your application.
+2. Add page/component objects around stable, user-facing locators.
+3. Create data through supported APIs and clean it up when the target supports deletion.
+4. Assert observable behavior and contract-relevant fields, not implementation details.
+5. Run `npm run typecheck`, `npm run lint`, and the relevant tests before opening a PR.
